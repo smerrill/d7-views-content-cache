@@ -8,72 +8,92 @@
  */
 class views_content_cache_plugin_cache extends views_plugin_cache {
   function option_defaults(&$options) {
-    $options['min_lifespan'] = 60;
-    $options['max_lifespan'] = 21600;
+    $options['results_min_lifespan'] = 0;
+    $options['results_max_lifespan'] = 0;
+    $options['output_min_lifespan'] = 21600;
+    $options['output_max_lifespan'] = 21600;
+    $options['node_types'] = array();
   }
 
   function options_form(&$form, &$form_state) {
-    //node type options
-    $types = node_get_types();
-	$options = array();
-	foreach ( $types as $type)
-		$options[$type->type] = $type->name;
+    $types = node_get_types('names');
 
-	$form['node_types'] = array(
-      '#type' => 'select',
-      '#title' => t('Flush on node update'),
-      '#description' => t('Flush cache when nodes of this type are updated/changed/deleted.'),
-      '#multiple' => TRUE,
-      '#options' => $options,
+	  $form['node_types'] = array(
+      '#type' => 'checkboxes',
+      '#title' => t('Content types to monitor'),
+      '#description' => t('The selected content types will be monitored for changes and the cache flushed accordingly.'),
+      '#options' => $types,
       '#default_value' => $this->options['node_types'],
     );
 
-    //Intervall options
     $options = array(60, 300, 1800, 3600, 21600, 518400);
     $options = drupal_map_assoc($options, 'format_interval');
     $options = array(-1 => t('None')) + $options;
-    $form['min_lifespan'] = array(
+
+    $form['results_min_lifespan'] = array(
       '#type' => 'select',
-      '#title' => t('Minimum Lifespan'),
-      '#description' => t('Force a minimum cache lifespan.'),
+      '#title' => t('Query results - Minimum lifetime'),
+      '#description' => t('Ensure results are cached for at least this amount of time.'),
       '#options' => $options,
-      '#default_value' => $this->options['min_lifespan'],
+      '#default_value' => $this->options['results_min_lifespan'],
     );
-    $form['max_lifespan'] = array(
+    $form['results_max_lifespan'] = array(
       '#type' => 'select',
-      '#title' => t('Maximum Lifespan'),
-      '#description' => t('The maximum lifespan, even if nothing else has changed.'),
+      '#title' => t('Query results - Maximum lifetime'),
+      '#description' => t('Ensure results are cached for at most this amount of time.'),
       '#options' => $options,
-      '#default_value' => $this->options['max_lifespan'],
+      '#default_value' => $this->options['results_max_lifespan'],
+    );
+
+    $form['output_min_lifespan'] = array(
+      '#type' => 'select',
+      '#title' => t('Rendered output - Minimum lifetime'),
+      '#description' => t('Ensure rendered HTML output are cached for at least this amount of time.'),
+      '#options' => $options,
+      '#default_value' => $this->options['output_min_lifespan'],
+    );
+    $form['output_max_lifespan'] = array(
+      '#type' => 'select',
+      '#title' => t('Rendered output - Maximum lifetime'),
+      '#description' => t('Ensure rendered HTML output are cached for at most this amount of time.'),
+      '#options' => $options,
+      '#default_value' => $this->options['output_max_lifespan'],
     );
 
   }
 
   function summary_title() {
-    return "Advanced Cache";
+    return "Content cache";
   }
 
+  /**
+   * Return the expiry time for this cache plugin.
+   *
+   * This should be the last time that the content has changed, altered to allow
+   * for the the min/max lifetimes.
+   */
   function cache_expire($type) {
 
-	//check for most recent update
-	$lastupdate = 0;
-	foreach ( $this->options['node_types'] as $typetype => $typename)
-	{
-		$update = variable_get ( "views_advanced_cache_typeupdate_".$typetype, 0 );
-		$lastupdate = max ($update, $lastupdate);
-		drupal_set_message ($lastupdate);
+    $cutoff = 0;
+    foreach (array_filter($this->options['node_types']) as $content_type => $v) {
+      $cutoff = max($cutoff, views_content_cache_last_update_get($content_type));
+    }
 
-	}
+    // If there's a minimum lifetime, enforce it:
+    if ($min_lifespan = $this->options[$type . 'min_lifespan']) {
+      $min_lifespan = time() - $min_lifespan;
+      $cutoff = min($min_lifespan, $cutoff);
+    }
 
-	//calculate min and max cutoff
-	$min_cutoff = time() - $this->options['min_lifespan'];
-	$max_cutoff = time() - $this->options['max_lifespan'];
+    // Only enforce a maximum lifetime if it's been specifically selected:
+    if ($max_lifespan = $this->options[$type . 'max_lifespan']) {
+      if ($max_lifespan != -1) {
+        $max_lifespan = time() - $max_lifespan;
+        $cutoff = max($max_lifespan, $cutoff);
+      }
+    }
 
-	$cutoff = min ( $min_cutoff, $lastupdate );
-	$cutoff = max ( $max_cutoff, $cutoff );
-
-	//that's it
-	return $cutoff;
+    return $cutoff;
   }
 
 }

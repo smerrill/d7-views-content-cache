@@ -19,18 +19,32 @@ function views_content_cache_views_api() {
 /**
  * Implementation of hook_nodeapi().
  *
- * Detect changes to node types.
+ * Detect changes to node types and record the modification time.
  */
-function views_advanced_cache_nodeapi ( &$node, $op )
-{
-  //here we catch certain operations on nodes and
-  //remember when they last took place for each node type
-  if ( $op == "delete" || $op == "submit" || $op == "insert" )
-  {
-	//remember for specific node
-    variable_set ( "views_advanced_cache_typeupdate_".$node->type, time());
-    //remember for any node (not needed at this point)
-    //variable_set ( "views_advanced_cache_typeupdate_all", time());
+function views_content_cache_nodeapi(&$node, $op, $teaser, $page) {
+  switch ($op) {
+    case 'insert':
+    case 'update':
+    case 'delete':
+    case 'delete revision':
+      views_content_cache_last_update_set($node->type);
+      break;
   }
 }
 
+/**
+ * Get the last update time for a given content type.
+ */
+function views_content_cache_last_update_get($type) {
+  return variable_get('views_content_cache_last_update_' . $type, 0);
+}
+
+/**
+ * Set the last update time for a given content type.
+ */
+function views_content_cache_last_update_set($type, $time = NULL) {
+  if (is_null($time)) {
+    $time = time();
+  }
+  variable_set('views_content_cache_last_update_' . $type, $time);
+}

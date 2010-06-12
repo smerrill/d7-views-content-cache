@@ -9,7 +9,7 @@ function views_content_cache_views_plugins() {
     'cache' => array(
       'views_content_cache' => array(
         'path' => drupal_get_path('module', 'views_content_cache') .'/views',
-        'title' => t('Content cache'),
+        'title' => t('Content-based'),
         'help' => t('Advanced content based caching options for views.'),
         'handler' => 'views_content_cache_plugin_cache',
         'uses options' => TRUE,
