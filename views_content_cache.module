@@ -1,0 +1,36 @@
+<?php
+// $Id$
+
+/**
+ * @file
+ *   Views content cache cache.
+ */
+
+/**
+ * Implementation of hook_views_api().
+ */
+function views_content_cache_views_api() {
+  return array(
+    'api' => 2,
+    'path' => drupal_get_path('module', 'views_content_cache') .'/views',
+  );
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ *
+ * Detect changes to node types.
+ */
+function views_advanced_cache_nodeapi ( &$node, $op )
+{
+  //here we catch certain operations on nodes and
+  //remember when they last took place for each node type
+  if ( $op == "delete" || $op == "submit" || $op == "insert" )
+  {
+	//remember for specific node
+    variable_set ( "views_advanced_cache_typeupdate_".$node->type, time());
+    //remember for any node (not needed at this point)
+    //variable_set ( "views_advanced_cache_typeupdate_all", time());
+  }
+}
+
