@@ -17,6 +17,23 @@ function views_content_cache_views_api() {
 }
 
 /**
+ * Get the last update time for a given content type.
+ */
+function views_content_cache_last_update_get($type) {
+  return variable_get('views_content_cache_last_update_' . $type, 0);
+}
+
+/**
+ * Set the last update time for a given content type.
+ */
+function views_content_cache_last_update_set($type, $time = NULL) {
+  if (is_null($time)) {
+    $time = time();
+  }
+  variable_set('views_content_cache_last_update_' . $type, $time);
+}
+
+/**
  * Implementation of hook_nodeapi().
  *
  * Detect changes to node types and record the modification time.
@@ -33,18 +50,21 @@ function views_content_cache_nodeapi(&$node, $op, $teaser, $page) {
 }
 
 /**
- * Get the last update time for a given content type.
+ * Implementation of hook_comment().
  */
-function views_content_cache_last_update_get($type) {
-  return variable_get('views_content_cache_last_update_' . $type, 0);
-}
-
-/**
- * Set the last update time for a given content type.
- */
-function views_content_cache_last_update_set($type, $time = NULL) {
-  if (is_null($time)) {
-    $time = time();
+function views_comment_cache_comment(&$a1, $op) {
+  return;
+  switch ($op) {
+    case 'insert':
+    case 'update':
+    case 'delete':
+    case 'publish':
+    case 'unpublish':
+      if (!empty($a1['nid'])) {
+        if ($node =  node_load($a1['nid'])) {
+          views_content_cache_last_update_set($node->type);
+        }
+      }
+      break;
   }
-  variable_set('views_content_cache_last_update_' . $type, $time);
 }
