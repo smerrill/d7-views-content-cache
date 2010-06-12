@@ -80,13 +80,13 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
     }
 
     // If there's a minimum lifetime, enforce it:
-    if ($min_lifespan = $this->options[$type . 'min_lifespan']) {
+    if ($min_lifespan = $this->options[$type . '_min_lifespan']) {
       $min_lifespan = time() - $min_lifespan;
       $cutoff = min($min_lifespan, $cutoff);
     }
 
     // Only enforce a maximum lifetime if it's been specifically selected:
-    if ($max_lifespan = $this->options[$type . 'max_lifespan']) {
+    if ($max_lifespan = $this->options[$type . '_max_lifespan']) {
       if ($max_lifespan != -1) {
         $max_lifespan = time() - $max_lifespan;
         $cutoff = max($max_lifespan, $cutoff);
