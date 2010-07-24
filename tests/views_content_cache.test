@@ -1,0 +1,47 @@
+<?php
+// $Id$
+
+class ViewsContentCacheTest extends DrupalWebTestCase {
+
+  function getInfo() {
+    return array(
+      'name' => t('Views content cache tests'),
+      'description' => t('Tests for the Views content cache module.'),
+      'group' => t('Views content cache'),
+    );
+  }
+
+  /**
+   * Test that when a node is added the appropriate cache segment is updated.
+   */
+  function testStoryContentAdded() {
+    $cid = array('node' => array('story'));
+    //$this->verbose(views_content_cache_update_get($cid));
+    $this->assertFalse(views_content_cache_update_get($cid, TRUE), t('Ensure that the no timestamp has been set against the story cache segment.'));
+
+    $timestamp_before = time();
+    $this->node = $this->drupalCreateNode(array('type' => 'story'));
+    $timestamp_after = time();
+
+    // Now need to make sure that views content cache recorded the correct time:
+    $cid = array('node' => array('story'));
+    $updated = views_content_cache_update_get($cid, TRUE);
+    $result = ($updated <= $timestamp_after) && ($updated >= $timestamp_before);
+    $this->assertTrue($result, t('Ensure that the timestamp against the story cache segment is updated.'));
+
+    // Make sure the page segment was untouched:
+    $this->assertFalse(views_content_cache_update_get(array('node' => array('page')), TRUE), t('Ensure that the no timestamp has been set against the page cache segment.'));
+  }
+
+  public function setUp() {
+    parent::setUp('views_content_cache', 'ctools', 'views', 'comment');  // Enable any modules required for the test
+    // Create and log in our privileged user.
+    $this->privileged_user = $this->drupalCreateUser(array(
+      'create story content',
+      'edit own story content',
+      ));
+    $this->drupalLogin($this->privileged_user);
+  }
+
+
+}

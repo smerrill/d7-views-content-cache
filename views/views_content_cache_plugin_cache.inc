@@ -12,19 +12,19 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
     $options['results_max_lifespan'] = 0;
     $options['output_min_lifespan'] = 21600;
     $options['output_max_lifespan'] = 21600;
-    $options['node_types'] = array();
+    $options['keys'] = array();
   }
 
   function options_form(&$form, &$form_state) {
-    $types = node_get_types('names');
-
-	  $form['node_types'] = array(
-      '#type' => 'checkboxes',
-      '#title' => t('Content types to monitor'),
-      '#description' => t('The selected content types will be monitored for changes and the cache flushed accordingly.'),
-      '#options' => $types,
-      '#default_value' => $this->options['node_types'],
+    $form['keys'] = array(
+      '#title' => t('Update view'),
+      '#type' => 'fieldset',
+      '#description' => t("Choose which events will update this View's cache."),
     );
+    foreach (views_content_cache_get_plugin() as $key_id => $plugin) {
+      $option_value = isset($this->options['keys'][$key_id]) ? $this->options['keys'][$key_id] : NULL;
+      $form['keys'][$key_id] = $plugin->options_form($option_value);
+    }
 
     $options = array(60, 300, 1800, 3600, 21600, 518400);
     $options = drupal_map_assoc($options, 'format_interval');
@@ -59,7 +59,6 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
       '#options' => $options,
       '#default_value' => $this->options['output_max_lifespan'],
     );
-
   }
 
   function summary_title() {
@@ -73,10 +72,17 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
    * for the the min/max lifetimes.
    */
   function cache_expire($type) {
-
     $cutoff = 0;
-    foreach (array_filter($this->options['node_types']) as $content_type => $v) {
-      $cutoff = max($cutoff, views_content_cache_last_update_get($content_type));
+
+    // Retrieve the latest update time matching the settings on this View.
+    $cid = array();
+    foreach ($this->options['keys'] as $key_id => $key_values) {
+      if ($plugin = views_content_cache_get_plugin($key_id)) {
+        $cid[$key_id] = $plugin->view_key($key_values);
+      }
+    }
+    if (!empty($cid) && $timestamp = views_content_cache_update_get($cid)) {
+      $cutoff = $timestamp;
     }
 
     // If there's a minimum lifetime, enforce it:
@@ -92,8 +98,6 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
         $cutoff = max($max_lifespan, $cutoff);
       }
     }
-
     return $cutoff;
   }
-
 }
