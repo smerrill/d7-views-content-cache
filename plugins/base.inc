@@ -5,7 +5,7 @@
  * Base class for the views content cache plugins.
  */
 class views_content_cache_key {
-  
+
   /**
    * Optionally provides a option form for the user to use this segment.
    *
@@ -18,19 +18,19 @@ class views_content_cache_key {
    *   The default value that has been previously set.
    * @return
    *   A FormAPI element that will appear as part of the views content cache
-   *   options form when building a view. 
+   *   options form when building a view.
    */
   function options_form($value) {
     return array();
   }
-  
+
   /**
    * Builds an array of keys for the cache segment.
    *
    * When an 'event' happens, e.g. a node is saved, views content cache will
    * consult this plugin for the keys it wishes to store in its cache segments.
    * Views content cache will then handle the storage.
-   * 
+   *
    * @param $object
    *   The object that is being changed.
    * @param $object_type
@@ -42,8 +42,8 @@ class views_content_cache_key {
   function content_key($object, $object_type) {
     return NULL;
   }
-  
-  
+
+
   /**
    * An array of keys to check in this cache segment when viewing the view.
    *
@@ -58,5 +58,14 @@ class views_content_cache_key {
    */
   function view_key($values) {
     return array_filter($values);
+  }
+
+  /**
+   * The method by which this plugin's where clause will be combined with others.
+   *
+   * Can either be 'AND' or 'OR' at the moment.
+   */
+  function clause_mode() {
+    return 'AND';
   }
 }

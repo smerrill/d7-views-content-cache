@@ -115,18 +115,52 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
     $mapped = views_content_cache_id_record($cid);
 
     // Generate the where clause from the cache id.
-    $where = array();
-    $args = array();
+    $where_query = array(
+      '#glue' => 'OR',
+      array(
+        '#glue' => 'AND',
+      ),
+    );
     foreach ($mapped as $key_id => $key_value) {
       if (!empty($key_value)) {
-        $where[] = "{$key_id} IN (" . db_placeholders($key_value, 'varchar') . ")";
-        $args = array_merge($args, array_values($key_value));
+        if ('AND' == views_content_cache_and_or_key_get($key_id)) {
+          // AND queries go to a sub array of the clause:
+          $where_query[0][] = array(
+            '#clause' => "{$key_id} IN (" . db_placeholders($key_value, 'varchar') . ")",
+            '#args' => array_values($key_value),
+          );
+        }
+        else {
+          // OR queries go to the base clause:
+          $where_query[] = array(
+            '#clause' => "{$key_id} IN (" . db_placeholders($key_value, 'varchar') . ")",
+            '#args' => array_values($key_value),
+          );
+        }
       }
     }
-    $where = implode(' AND ', $where);
-    $cache[$hash] = db_result(db_query("SELECT timestamp FROM {views_content_cache} WHERE {$where} ORDER BY timestamp DESC", $args));
+    $built_clause = views_content_cache_query_builder($where_query);
+    $cache[$hash] = db_result(db_query("SELECT timestamp FROM {views_content_cache} WHERE {$built_clause['#clause']} ORDER BY timestamp DESC", $built_clause['#args']));
   }
   return $cache[$hash];
+}
+
+/**
+ * Determine how this cache segment should be combined with others.
+ *
+ * @param
+ *   The cache segment, should be c1 or c2, etc.
+ * @return
+ *   Either 'AND' or 'OR' depending on how this cache segment can be combined
+ *   with the others.
+ */
+function views_content_cache_and_or_key_get($cid) {
+  $map = views_content_cache_id_schema();
+  if ($key = array_search($cid, $map)) {
+    $plugin = views_content_cache_get_plugin($key);
+    return $plugin->clause_mode();
+  }
+  return 'AND';
 }
 
 /**
@@ -191,7 +225,7 @@ function views_content_cache_id_record($cid) {
  * We store the schema mapping in the main cache table/bin, this means that it
  * can get invalidated quite quickly, but this will also probably coincide with
  * the views cache being flushed, so we're are just wasting a few CPU cycles in
- * reality. 
+ * reality.
  *
  * @param boolean $reset
  *   Reset the static and DB cache for the schema mapping.
@@ -265,6 +299,42 @@ function views_content_cache_get_plugin($plugin = NULL, $reset = FALSE) {
     return isset($cache[$plugin]) ? $cache[$plugin] : FALSE;
   }
   return $cache;
+}
+
+/**
+ * A simple SQL where clause builder.
+ *
+ * This function will recursively build a WHERE clause.
+ *
+ * @return
+ *   An array with two keyed, values:
+ *     - 'clause' - containing the meat of a WHERE clause.
+ *     - 'args' - An array of arguments for the db_query call.
+ */
+function views_content_cache_query_builder($query_array) {
+  // Arrays of clauses and args:
+  $clauses = array();
+  $args = array();
+
+  // First flatten this array:
+  foreach (element_children($query_array) as $key) {
+    if (is_array($query_array[$key]) && isset($query_array[$key]['#glue'])) {
+      $query_array[$key] = views_content_cache_query_builder($query_array[$key]);
+    }
+    if (isset($query_array[$key]['#clause'])) {
+      $clauses[] = $query_array[$key]['#clause'];
+      if (is_array($query_array[$key]['#args'])) {
+        $args = array_merge($args, $query_array[$key]['#args']);
+      }
+    }
+  }
+
+  $glue = isset($query_array['#glue']) ? $query_array['#glue'] : 'AND';
+  // If we are ORing, we need to add some brackets
+  return array(
+    '#clause' => '(' . implode(" $glue ", $clauses) . ')',
+    '#args' => $args,
+  );
 }
 
 /**
