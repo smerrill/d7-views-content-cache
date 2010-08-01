@@ -48,6 +48,13 @@ function views_content_cache_comment(&$a1, $op) {
 }
 
 /**
+ * Implementation of hook_votingapi_results().
+ */
+function views_content_cache_votingapi_results($cached, $content_type, $content_id) {
+  views_content_cache_update_set($cached, 'votingapi_results');
+}
+
+/**
  * Create one or more update records for the given object.
  *
  * @param object $object
@@ -123,17 +130,25 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
     );
     foreach ($mapped as $key_id => $key_value) {
       if (!empty($key_value)) {
+        // Use a simpler syntax for single value wheres:
+        if (count($key_value) == 1) {
+          $where = "{$key_id} = " . db_placeholders($key_value, 'varchar');
+        }
+        else {
+          $where = "{$key_id} IN (" . db_placeholders($key_value, 'varchar') . ")";
+        }
+        // Work out where the clause should be put in the query array:
         if ('AND' == views_content_cache_and_or_key_get($key_id)) {
           // AND queries go to a sub array of the clause:
           $where_query[0][] = array(
-            '#clause' => "{$key_id} IN (" . db_placeholders($key_value, 'varchar') . ")",
+            '#clause' => $where,
             '#args' => array_values($key_value),
           );
         }
         else {
           // OR queries go to the base clause:
           $where_query[] = array(
-            '#clause' => "{$key_id} IN (" . db_placeholders($key_value, 'varchar') . ")",
+            '#clause' => $where,
             '#args' => array_values($key_value),
           );
         }
@@ -403,6 +418,16 @@ function views_content_cache_views_content_cache_plugins() {
         'path' => drupal_get_path('module', 'views_content_cache') . '/plugins',
         'file' => 'og.inc',
         'class' => 'views_content_cache_key_og',
+        'parent' => 'base',
+      ),
+    );
+  }
+  if (module_exists('votingapi')) {
+    $plugins['votingapi'] = array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'views_content_cache') . '/plugins',
+        'file' => 'votingapi.inc',
+        'class' => 'views_content_cache_key_votingapi',
         'parent' => 'base',
       ),
     );
