@@ -4,3 +4,4 @@ description = Provides a views cache plugin based on content type changes.
 package = Views
 core = 6.x
 dependencies[] = views
+dependencies[] = ctools
