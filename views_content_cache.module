@@ -40,8 +40,14 @@ function views_content_cache_comment(&$a1, $op) {
     case 'delete':
     case 'publish':
     case 'unpublish':
-      if (!empty($a1['nid']) && ($node = node_load($a1['nid']))) {
-        views_content_cache_update_set($a1, 'comment');
+      if (is_object($a1)) {
+        $arr = (array)drupal_clone($a1);
+      }
+      else {
+        $arr = $a1;
+      }
+      if (!empty($arr['nid']) && ($node = node_load($arr['nid']))) {
+        views_content_cache_update_set($arr, 'comment');
       }
       break;
   }
