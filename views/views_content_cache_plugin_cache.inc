@@ -100,4 +100,39 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
     }
     return $cutoff;
   }
+
+
+  function get_results_key() {
+    global $user;
+
+    if (!isset($this->_results_key)) {
+
+      // This is a fix for the build info not including the actual query run:
+      // See:
+      $execute_info = $this->view->build_info;
+
+      $execute_info['query'] = db_rewrite_sql($execute_info['query'], $this->view->base_table, $this->view->base_field, array('view' => &$this->view));
+      $execute_info['count_query'] = db_rewrite_sql($execute_info['count_query'], $this->view->base_table, $this->view->base_field, array('view' => &$this->view));
+      $replacements = module_invoke_all('views_query_substitutions', $this->view);
+      $execute_info['query'] = str_replace(array_keys($replacements), $replacements, $execute_info['query']);
+      $execute_info['count_query'] = 'SELECT COUNT(*) FROM (' . str_replace(array_keys($replacements), $replacements, $execute_info['count_query']) . ') count_alias';
+      // End generating the execution info.
+
+      $key_data = array(
+        'execute_info' => $execute_info,
+        'roles' => array_keys($user->roles),
+        'super-user' => $user->uid == 1, // special caching for super user.
+        'language' => $GLOBALS['language'],
+      );
+      foreach (array('exposed_info', 'page', 'sort', 'order') as $key) {
+        if (isset($_GET[$key])) {
+          $key_data[$key] = $_GET[$key];
+        }
+      }
+
+      $this->_results_key = $this->view->name . ':' . $this->display->id . ':results:' . md5(serialize($key_data));
+    }
+
+    return $this->_results_key;
+  }
 }
