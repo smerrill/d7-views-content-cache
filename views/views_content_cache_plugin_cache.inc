@@ -33,14 +33,14 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
     $form['results_min_lifespan'] = array(
       '#type' => 'select',
       '#title' => t('Query results - Minimum lifetime'),
-      '#description' => t('Ensure results are cached for at least this amount of time.'),
+      '#description' => t('Query results will be cached for <strong>at least</strong> this amount of time, even if a selected event has occured more recently.'),
       '#options' => $options,
       '#default_value' => $this->options['results_min_lifespan'],
     );
     $form['results_max_lifespan'] = array(
       '#type' => 'select',
       '#title' => t('Query results - Maximum lifetime'),
-      '#description' => t('Ensure results are cached for at most this amount of time.'),
+      '#description' => t('Query results will be cached for <strong>at most</strong> this amount of time.'),
       '#options' => $options,
       '#default_value' => $this->options['results_max_lifespan'],
     );
@@ -48,14 +48,14 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
     $form['output_min_lifespan'] = array(
       '#type' => 'select',
       '#title' => t('Rendered output - Minimum lifetime'),
-      '#description' => t('Ensure rendered HTML output are cached for at least this amount of time.'),
+      '#description' => t('Rendered HTML output will be cached for <strong>at least</strong> this amount of time, even if a selected event has occured more recently.'),
       '#options' => $options,
       '#default_value' => $this->options['output_min_lifespan'],
     );
     $form['output_max_lifespan'] = array(
       '#type' => 'select',
       '#title' => t('Rendered output - Maximum lifetime'),
-      '#description' => t('Ensure rendered HTML output are cached for at most this amount of time.'),
+      '#description' => t('Rendered HTML output will be cached for <strong>at most</strong> this amount of time.'),
       '#options' => $options,
       '#default_value' => $this->options['output_max_lifespan'],
     );
