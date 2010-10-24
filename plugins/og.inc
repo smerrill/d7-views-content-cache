@@ -4,7 +4,7 @@
 /**
  * Views content cache plugin for Organic Groups.
  *
- * This plugin allows using OG as a cache segment, views caching acn depend on
+ * This plugin allows using OG as a cache segment, views caching can depend on
  * the current group context, and/or all the groups that the current user
  * belongs to.
  */
