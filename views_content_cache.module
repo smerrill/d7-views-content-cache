@@ -407,6 +407,16 @@ function views_content_cache_views_content_cache_plugins() {
       'parent' => 'base',
     ),
   );
+  $plugins['node_only'] = array(
+    'title' => t('Pure node updates only'),
+    'description' => t('Invalidates cache for main node operations'),
+    'handler' => array(
+      'path' => drupal_get_path('module', 'views_content_cache') . '/plugins',
+      'file' => 'node_only.inc',
+      'class' => 'views_content_cache_key_node_only',
+      'parent' => 'base',
+    ),
+  );
   if (module_exists('comment')) {
     $plugins['comment'] = array(
       'title' => t('Comment'),

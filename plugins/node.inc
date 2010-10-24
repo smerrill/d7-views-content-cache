@@ -5,10 +5,11 @@ class views_content_cache_key_node extends views_content_cache_key {
   function options_form($value) {
     return array(
       '#title' => t('Node types'),
-      '#description' => t('Checks for new or updated nodes of any of the following types'),
+      '#description' => t('Checks for new or updated nodes of any of the selected types.'),
       '#type' => 'checkboxes',
       '#options' => node_get_types('names'),
       '#default_value' => $value,
+      '#weight' => -10,
     );
   }
 
