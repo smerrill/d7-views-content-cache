@@ -32,8 +32,8 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
       '#description' => t("Choose which events will update this View's cache."),
     );
     foreach (views_content_cache_get_plugin() as $key_id => $plugin) {
-      $option_value = isset($this->options['keys'][$key_id]) ? $this->options['keys'][$key_id] : NULL;
-      $form['keys'][$key_id] = $plugin->options_form($option_value);
+      $option_value = isset($this->options['keys'][$key_id]) ? $this->options['keys'][$key_id] : array();
+      $form['keys'][$key_id] = $plugin->options_form($option_value, $this);
     }
 
     $options = array(60, 300, 1800, 3600, 21600, 518400);
@@ -89,7 +89,7 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
     if (!empty($this->options['keys'])) {
       foreach ($this->options['keys'] as $key_id => $key_values) {
         if ($plugin = views_content_cache_get_plugin($key_id)) {
-          $cid[$key_id] = $plugin->view_key($key_values);
+          $cid[$key_id] = $plugin->view_key($key_values, $this);
         }
       }
     }

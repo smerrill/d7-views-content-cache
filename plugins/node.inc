@@ -2,12 +2,12 @@
 // $Id$
 
 class views_content_cache_key_node extends views_content_cache_key {
-  function options_form($value) {
+  function options_form($value, &$handler) {
     return array(
       '#title' => t('Node types'),
       '#description' => t('Checks for new or updated nodes of any of the selected types.'),
       '#type' => 'checkboxes',
-      '#options' => node_get_types('names'),
+      '#options' => array_merge(node_get_types('names'), $this->additional_options_for_arguments($handler->view)),
       '#default_value' => $value,
       '#weight' => -10,
     );
@@ -20,5 +20,12 @@ class views_content_cache_key_node extends views_content_cache_key {
     elseif ($object_type === 'comment' && !empty($object['nid']) && ($node = node_load($object['nid']))) {
       return $node->type;
     }
+  }
+
+  /**
+   * We support using the node type argument for the view key
+   */
+  function view_key_from_arguments() {
+    return array('views_handler_argument_node_type');
   }
 }

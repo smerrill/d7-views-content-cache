@@ -9,15 +9,15 @@
  * belongs to.
  */
 class views_content_cache_key_og extends views_content_cache_key {
-  function options_form($value) {
+  function options_form($value, &$handler) {
     return array(
       '#title' => t('Organic Groups'),
       '#description' => t('Checks for updates related to Organic Groups'),
       '#type' => 'checkboxes',
-      '#options' => array(
+      '#options' => array_merge(array(
         'current' => t('Current group'),
         'user' => t("Member's groups")
-      ),
+      ), $this->additional_options_for_arguments($handler->view)),
       '#default_value' => $value,
     );
   }
@@ -37,7 +37,7 @@ class views_content_cache_key_og extends views_content_cache_key {
     return $keys;
   }
 
-  function view_key($values) {
+  function view_key($values, &$handler) {
     $values = array_filter($values);
     $groups = array();
     if (!empty($values['current']) && ($current = og_get_group_context())) {
@@ -49,6 +49,15 @@ class views_content_cache_key_og extends views_content_cache_key {
         $groups = array_merge($groups, array_keys($user->og_groups));
       }
     }
+    unset($values['current'], $values['user']);
+    // Add in the arguments.
+    foreach ($this->view_key_replace_arguments($values, $handler) as $gid) {
+      $groups[] = $gid;
+    }
     return array_unique($groups);
+  }
+
+  function view_key_from_arguments() {
+    return array('og_views_handler_argument_og_group_nid');
   }
 }

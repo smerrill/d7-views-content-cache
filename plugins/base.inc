@@ -16,11 +16,13 @@ class views_content_cache_key {
    *
    * @param $value
    *   The default value that has been previously set.
+   * @param $handler
+   *   The handler that this options for is for.
    * @return
    *   A FormAPI element that will appear as part of the views content cache
    *   options form when building a view.
    */
-  function options_form($value) {
+  function options_form($value, &$handler) {
     return array();
   }
 
@@ -56,8 +58,82 @@ class views_content_cache_key {
    * @return
    *   An array of keys in our cache segment.
    */
-  function view_key($values) {
-    return array_filter($values);
+  function view_key($values, &$handler) {
+    $values = array_filter($values);
+
+    // Find any values that are for arguments and replace with real values.
+    if (count($this->view_key_from_arguments())) {
+      $values = $this->view_key_replace_arguments($values, $handler);
+    }
+
+    return $values;
+  }
+
+  /**
+   * Replaces values corresponding to argument values set dynamically.
+   */
+  function view_key_replace_arguments($values, &$handler) {
+    foreach ($values as $value) {
+      if (strpos($value, '__arg:') === 0) {
+        // Get the argument and make sure its actually on the view still.
+        $arg_id = substr($value, strlen('__arg:'));
+        if (isset($handler->view->argument[$arg_id]) && $handler->view->argument[$arg_id]->argument_validated) {
+          // Argument is there and ready to go!
+          $argument = drupal_clone($handler->view->argument[$arg_id]);
+          $arg_value = $argument->get_value();
+          // Might need to split this up.
+          if (!empty($argument->options['break_phrase'])) {
+            views_break_phrase($argument->get_value(), $argument);
+            foreach ($argument->value as $new_val) {
+              $values[$new_val] = $new_val;
+            }
+          }
+          else {
+            $new_val = $argument->get_value();
+            $values[$new_val] = $new_val;
+          }
+        }
+        // Always remove the dummy argument value.
+        unset($values[$value]);
+      }
+    }
+
+    return $values;
+  }
+
+  /**
+   * Returns an array of views arguments that can supply valid key values.
+   *
+   * Plugins can define types of arguments that can optionally be checked for
+   * key values when looking up cache segments.
+   *
+   * @return
+   *   An array of argument handler classes that this plugin supports.
+   */
+  function view_key_from_arguments() {
+    return array();
+  }
+
+  /**
+   * Handy helper method that scans the given view looking for arguments.
+   */
+  function additional_options_for_arguments(&$view) {
+    $options = array();
+
+    $arguments = $view->display_handler->get_handlers('argument');
+
+    if (is_array($arguments)) {
+      foreach ($arguments as $arg_id => $argument) {
+        foreach ($this->view_key_from_arguments() as $class) {
+          if (is_a($argument, $class)) {
+            // This argument can provide us with keys.
+            $options['__arg:' . $arg_id] = t('Value from argument: %title', array('%title' => $argument->ui_name()));
+          }
+        }
+      }
+    }
+
+    return $options;
   }
 
   /**
