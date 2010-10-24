@@ -161,7 +161,14 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
       }
     }
     $built_clause = views_content_cache_query_builder($where_query);
-    $cache[$hash] = db_result(db_query("SELECT timestamp FROM {views_content_cache} WHERE {$built_clause['#clause']} ORDER BY timestamp DESC", $built_clause['#args']));
+
+    // If there were arguments in the query, run it.
+    if (!empty($built_clause['#args'])) {
+      $cache[$hash] = db_result(db_query("SELECT timestamp FROM {views_content_cache} WHERE {$built_clause['#clause']} ORDER BY timestamp DESC", $built_clause['#args']));
+    }
+    else {
+      $cache[$hash] = FALSE;
+    }
   }
   return $cache[$hash];
 }
