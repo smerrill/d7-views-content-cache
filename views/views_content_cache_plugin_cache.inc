@@ -7,12 +7,16 @@
  * certain node types.
  */
 class views_content_cache_plugin_cache extends views_plugin_cache {
-  function option_defaults(&$options) {
-    $options['results_min_lifespan'] = 0;
-    $options['results_max_lifespan'] = 0;
-    $options['output_min_lifespan'] = 21600;
-    $options['output_max_lifespan'] = 21600;
-    $options['keys'] = array();
+  function option_definition() {
+    $options = parent::option_definition();
+
+    $options['results_min_lifespan'] = array('default' => 0);
+    $options['results_max_lifespan'] = array('default' => 0);
+    $options['output_min_lifespan'] = array('default' => 21600);
+    $options['output_max_lifespan'] = array('default' => 21600);
+    $options['keys'] = array('default' => array());
+
+    return $options;
   }
 
   function options_form(&$form, &$form_state) {
@@ -76,9 +80,11 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
 
     // Retrieve the latest update time matching the settings on this View.
     $cid = array();
-    foreach ($this->options['keys'] as $key_id => $key_values) {
-      if ($plugin = views_content_cache_get_plugin($key_id)) {
-        $cid[$key_id] = $plugin->view_key($key_values);
+    if (!empty($this->options['keys'])) {
+      foreach ($this->options['keys'] as $key_id => $key_values) {
+        if ($plugin = views_content_cache_get_plugin($key_id)) {
+          $cid[$key_id] = $plugin->view_key($key_values);
+        }
       }
     }
     if (!empty($cid) && $timestamp = views_content_cache_update_get($cid)) {
