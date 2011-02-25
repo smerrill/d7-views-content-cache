@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Base class for the views content cache plugins.

@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class views_content_cache_key_votingapi extends views_content_cache_key {
 

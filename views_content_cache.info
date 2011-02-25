@@ -1,4 +1,3 @@
-; $Id$
 name = Views Content Cache
 description = Provides a views cache plugin based on content type changes.
 package = Views

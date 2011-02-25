@@ -1,4 +1,3 @@
-$Id$
 
 Views content cache
 -------------------

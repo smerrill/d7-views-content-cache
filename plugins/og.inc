@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Views content cache plugin for Organic Groups.
