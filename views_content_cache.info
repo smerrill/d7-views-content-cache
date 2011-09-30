@@ -4,3 +4,14 @@ package = Views
 core = 7.x
 dependencies[] = views
 dependencies[] = ctools
+
+# Context plugins
+files[] = plugins/base.inc
+files[] = plugins/comment.inc
+files[] = plugins/node.inc
+files[] = plugins/node_only.inc
+files[] = plugins/og.inc
+files[] = plugins/votingapi.inc
+
+# Views plugins
+files[] = views/views_content_cache_plugin_cache.inc
