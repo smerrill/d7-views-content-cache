@@ -53,15 +53,6 @@ function views_content_cache_comment_insert($comment) {
 }
 
 /**
- * Implements hook_comment_insert().
- */
-function views_content_cache_comment_insert($comment) {
-  if (!empty($comment->nid) && ($node = node_load($comment->nid))) {
-    views_content_cache_update_set($comment, 'comment');
-  }
-}
-
-/**
  * Implements hook_comment_update().
  */
 function views_content_cache_comment_update($comment) {
@@ -123,27 +114,26 @@ function views_content_cache_update_set($object, $object_type, $timestamp = NULL
   $update = FALSE;
   $timestamp = isset($timestamp) ? $timestamp : time();
   if ($cids = views_content_cache_id_generate($object, $object_type)) {
+    dsm($cids);
     foreach ($cids as $cid) {
       if (!empty($cid)) {
         $update = TRUE;
         $mapped = views_content_cache_id_record($cid);
 
+        $delete = db_delete('views_content_cache');
+
         // Remove any update records that match this cid.
-        $where = array();
-        $args = array();
         foreach ($mapped as $key_id => $key_value) {
+          // @todo:
+          // Can't this if/elseif be joined as well?
           if (isset($key_value)) {
-            $where[] = "{$key_id} = " . db_placeholders($key_value, 'varchar');
-            $args[] = $key_value;
+            $delete->condition($key_id, $key_value);
           }
           else {
-            $where[] = "{$key_id} IS NULL";
+            $delete->condition($key_id);
           }
         }
-        if (!empty($where)) {
-          $where = implode(' AND ', $where);
-          db_query("DELETE FROM {views_content_cache} WHERE {$where}", $args);
-        }
+        $delete->execute();
 
         $mapped['timestamp'] = $timestamp;
         drupal_write_record('views_content_cache', $mapped);
@@ -171,6 +161,10 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
   if (!isset($cache[$hash]) || $reset) {
     $mapped = views_content_cache_id_record($cid);
 
+    $select = db_select('views_content_cache', 'vcc')
+      ->addField('vcc', 'timestamp')
+      ->orderBy('timestamp', 'DESC');
+
     // Generate the where clause from the cache id.
     $where_query = array(
       '#glue' => 'OR',
@@ -180,13 +174,7 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
     );
     foreach ($mapped as $key_id => $key_value) {
       if (!empty($key_value)) {
-        // Use a simpler syntax for single value wheres:
-        if (count($key_value) == 1) {
-          $where = "{$key_id} = " . db_placeholders($key_value, 'varchar');
-        }
-        else {
-          $where = "{$key_id} IN (" . db_placeholders($key_value, 'varchar') . ")";
-        }
+        $select->condition($key_id, $key_value);
         // Work out where the clause should be put in the query array:
         if ('AND' == views_content_cache_and_or_key_get($key_id)) {
           // AND queries go to a sub array of the clause:
@@ -208,7 +196,8 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
 
     // If there were arguments in the query, run it.
     if (!empty($built_clause['#args'])) {
-      $cache[$hash] = db_result(db_query("SELECT timestamp FROM {views_content_cache} WHERE {$built_clause['#clause']} ORDER BY timestamp DESC", $built_clause['#args']));
+      $select->execute();
+      $cache[$hash] = $select->fetchField();
     }
     else {
       $cache[$hash] = FALSE;
