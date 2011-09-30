@@ -18,13 +18,8 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
     return $options;
   }
 
-  // We seem to need this for views 2
-  function option_defaults(&$options) {
-    $options['results_max_lifespan'] = 21600;
-    $options['output_max_lifespan'] = 21600;
-  }
-
   function options_form(&$form, &$form_state) {
+    parent::options_form($form, $form_state);
     $form['keys'] = array(
       '#title' => t('Cache segments'),
       '#type' => 'fieldset',
