@@ -16,39 +16,84 @@ function views_content_cache_views_api() {
 }
 
 /**
- * Implements hook_nodeapi().
+ * Implements hook_node_insert().
  */
-function views_content_cache_nodeapi(&$node, $op, $teaser, $page) {
-  switch ($op) {
-    case 'insert':
-    case 'update':
-    case 'delete':
-    case 'delete revision':
-      views_content_cache_update_set($node, 'node');
-      break;
+function views_content_cache_node_insert($node) {
+  views_content_cache_update_set($node, 'node');
+}
+
+/**
+ * Implements hook_node_update().
+ */
+function views_content_cache_node_update($node) {
+  views_content_cache_update_set($node, 'node');
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function views_content_cache_node_delete($node) {
+  views_content_cache_update_set($node, 'node');
+}
+
+/**
+ * Implements hook_node_insert().
+ */
+function views_content_cache_node_revision_delete($node) {
+  views_content_cache_update_set($node, 'node');
+}
+
+/**
+ * Implements hook_comment_insert().
+ */
+function views_content_cache_comment_insert($comment) {
+  if (!empty($comment->nid) && ($node = node_load($comment->nid))) {
+    views_content_cache_update_set($comment, 'comment');
   }
 }
 
 /**
- * Implements hook_comment().
+ * Implements hook_comment_insert().
  */
-function views_content_cache_comment(&$a1, $op) {
-  switch ($op) {
-    case 'insert':
-    case 'update':
-    case 'delete':
-    case 'publish':
-    case 'unpublish':
-      if (is_object($a1)) {
-        $arr = (array)drupal_clone($a1);
-      }
-      else {
-        $arr = $a1;
-      }
-      if (!empty($arr['nid']) && ($node = node_load($arr['nid']))) {
-        views_content_cache_update_set($arr, 'comment');
-      }
-      break;
+function views_content_cache_comment_insert($comment) {
+  if (!empty($comment->nid) && ($node = node_load($comment->nid))) {
+    views_content_cache_update_set($comment, 'comment');
+  }
+}
+
+/**
+ * Implements hook_comment_update().
+ */
+function views_content_cache_comment_update($comment) {
+  if (!empty($comment->nid) && ($node = node_load($comment->nid))) {
+    views_content_cache_update_set($comment, 'comment');
+  }
+}
+
+/**
+ * Implements hook_comment_delete().
+ */
+function views_content_cache_comment_delete($comment) {
+  if (!empty($comment->nid) && ($node = node_load($comment->nid))) {
+    views_content_cache_update_set($comment, 'comment');
+  }
+}
+
+/**
+ * Implements hook_comment_publish().
+ */
+function views_content_cache_comment_publish($comment) {
+  if (!empty($comment->nid) && ($node = node_load($comment->nid))) {
+    views_content_cache_update_set($comment, 'comment');
+  }
+}
+
+/**
+ * Implements hook_comment_unpublish().
+ */
+function views_content_cache_comment_unpublish($comment) {
+  if (!empty($comment->nid) && ($node = node_load($comment->nid))) {
+    views_content_cache_update_set($comment, 'comment');
   }
 }
 

@@ -6,7 +6,7 @@ class views_content_cache_key_node extends views_content_cache_key {
       '#title' => t('Node types'),
       '#description' => t('Checks for new or updated nodes of any of the selected types.'),
       '#type' => 'checkboxes',
-      '#options' => array_merge(node_get_types('names'), $this->additional_options_for_arguments($handler->view)),
+      '#options' => array_merge(node_type_get_names(), $this->additional_options_for_arguments($handler->view)),
       '#default_value' => $value,
       '#weight' => -10,
     );
