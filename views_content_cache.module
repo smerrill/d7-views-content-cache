@@ -328,7 +328,7 @@ function views_content_cache_id_schema($reset = FALSE) {
       // If the newly generated map and the prior map do not match invalidate
       // all cache update records.
       if (empty($cache->data) || ($map != $cache->data)) {
-        db_query("TRUNCATE {views_content_cache}");
+        db_truncate('views_content_cache');
 
         // This is probably too aggressive. @TODO: See if we can surgically
         // invalidate only views that use VCC.
