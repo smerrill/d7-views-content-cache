@@ -413,17 +413,28 @@ function views_content_cache_ctools_plugin_api($module, $api) {
 }
 
 /**
- * Implements hook_ctools_plugin_plugins().
+ * Implements hook_ctools_plugin_type().
  */
-function views_content_cache_ctools_plugin_plugins() {
+function views_content_cache_ctools_plugin_type() {
   return array(
-    'cache' => TRUE,
-    'use hooks' => TRUE,
+    'plugins' => array(
+      'cache' => TRUE,
+      'use hooks' => TRUE,
+    ),
   );
 }
 
 /**
- * Implements hook_context_plugins().
+ * Implements hook_ctools_plugin_directory().
+ */
+function views_content_cache_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'views_content_cache') {
+    return "plugins/$plugin_type";
+  }
+}
+
+/**
+ * Implements hook_views_content_cache_plugins().
  *
  * This is a ctools plugins hook.
  */
