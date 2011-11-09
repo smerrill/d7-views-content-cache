@@ -117,20 +117,11 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
     global $user;
 
     if (!isset($this->_results_key)) {
-
-      // This is a fix for the build info not including the actual query run:
-      // See:
-      $execute_info = $this->view->build_info;
-
-      $execute_info['query'] = db_rewrite_sql($execute_info['query'], $this->view->base_table, $this->view->base_field, array('view' => &$this->view));
-      $execute_info['count_query'] = db_rewrite_sql($execute_info['count_query'], $this->view->base_table, $this->view->base_field, array('view' => &$this->view));
-      $replacements = module_invoke_all('views_query_substitutions', $this->view);
-      $execute_info['query'] = str_replace(array_keys($replacements), $replacements, $execute_info['query']);
-      $execute_info['count_query'] = 'SELECT COUNT(*) FROM (' . str_replace(array_keys($replacements), $replacements, $execute_info['count_query']) . ') count_alias';
-      // End generating the execution info.
+      // @TODO: Add regenerating execute_info back in from
+      // $this->view->build_info, tag w/ node_access?
 
       $key_data = array(
-        'execute_info' => $execute_info,
+        'execute_info' => $this->view->build_info,
         'roles' => array_keys($user->roles),
         'super-user' => $user->uid == 1, // special caching for super user.
         'language' => $GLOBALS['language'],
