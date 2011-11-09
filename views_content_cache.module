@@ -124,8 +124,8 @@ function views_content_cache_update_set($object, $object_type, $timestamp = NULL
         $args = array();
         foreach ($mapped as $key_id => $key_value) {
           if (isset($key_value)) {
-            $where[] = "{$key_id} = " . db_placeholders($key_value, 'varchar');
-            $args[] = $key_value;
+            $where[] = "{$key_id} = :{$key_id}";
+            $args[":{$key_id}"] = $key_value;
           }
           else {
             $where[] = "{$key_id} IS NULL";
@@ -174,10 +174,10 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
       if (!empty($key_value)) {
         // Use a simpler syntax for single value wheres:
         if (count($key_value) == 1) {
-          $where = "{$key_id} = " . db_placeholders($key_value, 'varchar');
+          $where = "{$key_id} = :{$key_id}";
         }
         else {
-          $where = "{$key_id} IN (" . db_placeholders($key_value, 'varchar') . ")";
+          $where= "{$key_id} IN :{$key_id}";
         }
 
         // Work out where the clause should be put in the query array:
@@ -185,14 +185,14 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
           // AND queries go to a sub array of the clause:
           $where_query[0][] = array(
             '#clause' => $where,
-            '#args' => array_values($key_value),
+            '#args' => array(":{$key_id}" => array_values($key_value)),
           );
         }
         else {
           // OR queries go to the base clause:
           $where_query[] = array(
             '#clause' => $where,
-            '#args' => array_values($key_value),
+            '#args' => array(":{$key_id}" => array_values($key_value)),
           );
         }
       }
@@ -201,7 +201,7 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
 
     // If there were arguments in the query, run it.
     if (!empty($built_clause['#args'])) {
-      $cache[$hash] = db_result(db_query("SELECT timestamp FROM {views_content_cache} WHERE {$built_clause['#clause']} ORDER BY timestamp DESC", $built_clause['#args']));
+      $cache[$hash] = db_query("SELECT timestamp FROM {views_content_cache} WHERE {$built_clause['#clause']} ORDER BY timestamp DESC", $built_clause['#args'])->fetchField();
     }
     else {
       $cache[$hash] = FALSE;
@@ -396,6 +396,7 @@ function views_content_cache_query_builder($query_array) {
   }
 
   $glue = isset($query_array['#glue']) ? $query_array['#glue'] : 'AND';
+
   // If we are ORing, we need to add some brackets
   return array(
     '#clause' => '(' . implode(" $glue ", $clauses) . ')',
