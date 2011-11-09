@@ -6,20 +6,9 @@
  */
 
 /**
-* Implementation of hook_schema().
+* Implements hook_schema().
 */
 function views_content_cache_schema() {
-  return views_content_cache_schema_6001();
-}
-
-/**
- * Schema version 6001.
- *
- * We'va added a table here that can store timestamps against various cache
- * segments. These get dynamically mapped to real cache segments, like node type
- * or organic group ID.
- */
-function views_content_cache_schema_6001() {
   $schema = array();
   $schema['views_content_cache'] = array(
     'description' => 'Stores timestamps for various cache segments showing the last time the segment changed.',
@@ -94,13 +83,3 @@ function views_content_cache_schema_6001() {
   return $schema;
 }
 
-/**
- * Update 6001: Create tables for schema version 6001.
- */
-function views_content_cache_update_6001() {
-  $ret = array();
-  foreach (views_content_cache_schema_6001() as $name => $table) {
-    db_create_table($name, $table);
-  }
-  return $ret;
-}

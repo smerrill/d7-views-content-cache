@@ -18,9 +18,9 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
     //$this->verbose(views_content_cache_update_get($cid));
     $this->assertFalse(views_content_cache_update_get($cid, TRUE), t('Ensure that the no timestamp has been set against the story cache segment.'));
 
-    $timestamp_before = time();
+    $timestamp_before = REQUEST_TIME;
     $this->node = $this->drupalCreateNode(array('type' => 'story'));
-    $timestamp_after = time();
+    $timestamp_after = REQUEST_TIME;
 
     // Now need to make sure that views content cache recorded the correct time:
     $cid = array('node' => array('story'));
@@ -48,9 +48,9 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
     // Create the node we'll be posting against.
     $this->node = $this->drupalCreateNode(array('type' => 'story'));
 
-    $timestamp_before = time();
+    $timestamp_before = REQUEST_TIME;
     $this->comment = $this->postComment($this->node, $this->randomName(32));
-    $timestamp_after = time();
+    $timestamp_after = REQUEST_TIME;
 
     // Now need to make sure that views content cache recorded the correct time:
     // In the global comment segment.

@@ -75,10 +75,10 @@ class views_content_cache_key {
     foreach ($values as $value) {
       if (strpos($value, '__arg:') === 0) {
         // Get the argument and make sure its actually on the view still.
-        $arg_id = substr($value, strlen('__arg:'));
+        $arg_id = drupal_substr($value, drupal_strlen('__arg:'));
         if (isset($handler->view->argument[$arg_id]) && $handler->view->argument[$arg_id]->argument_validated) {
           // Argument is there and ready to go!
-          $argument = drupal_clone($handler->view->argument[$arg_id]);
+          $argument = clone($handler->view->argument[$arg_id]);
           $arg_value = $argument->get_value();
           // Might need to split this up.
           if (!empty($argument->options['break_phrase'])) {

@@ -18,8 +18,13 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
     return $options;
   }
 
+  function option_defaults(&$options) {
+    $options['results_max_lifespan'] = 21600;
+    $options['output_max_lifespan'] = 21600;
+  }
+
+
   function options_form(&$form, &$form_state) {
-    parent::options_form($form, $form_state);
     $form['keys'] = array(
       '#title' => t('Cache segments'),
       '#type' => 'fieldset',
@@ -93,14 +98,14 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
 
     // If there's a minimum lifetime, enforce it:
     if ($min_lifespan = $this->options[$type . '_min_lifespan']) {
-      $min_lifespan = time() - $min_lifespan;
+      $min_lifespan = REQUEST_TIME - $min_lifespan;
       $cutoff = min($min_lifespan, $cutoff);
     }
 
     // Only enforce a maximum lifetime if it's been specifically selected:
     if ($max_lifespan = $this->options[$type . '_max_lifespan']) {
       if ($max_lifespan != -1) {
-        $max_lifespan = time() - $max_lifespan;
+        $max_lifespan = REQUEST_TIME - $max_lifespan;
         $cutoff = max($max_lifespan, $cutoff);
       }
     }

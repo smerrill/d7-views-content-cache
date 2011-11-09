@@ -30,14 +30,14 @@ function views_content_cache_node_update($node) {
 }
 
 /**
- * Implements hook_node_insert().
+ * Implements hook_node_delete().
  */
 function views_content_cache_node_delete($node) {
   views_content_cache_update_set($node, 'node');
 }
 
 /**
- * Implements hook_node_insert().
+ * Implements hook_node_revision_delete().
  */
 function views_content_cache_node_revision_delete($node) {
   views_content_cache_update_set($node, 'node');
@@ -112,28 +112,30 @@ function views_content_cache_votingapi_results($cached, $content_type, $content_
  */
 function views_content_cache_update_set($object, $object_type, $timestamp = NULL) {
   $update = FALSE;
-  $timestamp = isset($timestamp) ? $timestamp : time();
+  $timestamp = isset($timestamp) ? $timestamp : REQUEST_TIME;
   if ($cids = views_content_cache_id_generate($object, $object_type)) {
-    dsm($cids);
     foreach ($cids as $cid) {
       if (!empty($cid)) {
         $update = TRUE;
         $mapped = views_content_cache_id_record($cid);
 
-        $delete = db_delete('views_content_cache');
-
         // Remove any update records that match this cid.
+        $where = array();
+        $args = array();
         foreach ($mapped as $key_id => $key_value) {
-          // @todo:
-          // Can't this if/elseif be joined as well?
           if (isset($key_value)) {
-            $delete->condition($key_id, $key_value);
+            $where[] = "{$key_id} = " . db_placeholders($key_value, 'varchar');
+            $args[] = $key_value;
           }
           else {
-            $delete->condition($key_id);
+            $where[] = "{$key_id} IS NULL";
           }
         }
-        $delete->execute();
+
+        if (!empty($where)) {
+          $where = implode(' AND ', $where);
+          db_query("DELETE FROM {views_content_cache} WHERE {$where}", $args);
+        }
 
         $mapped['timestamp'] = $timestamp;
         drupal_write_record('views_content_cache', $mapped);
@@ -161,10 +163,6 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
   if (!isset($cache[$hash]) || $reset) {
     $mapped = views_content_cache_id_record($cid);
 
-    $select = db_select('views_content_cache', 'vcc')
-      ->addField('vcc', 'timestamp')
-      ->orderBy('timestamp', 'DESC');
-
     // Generate the where clause from the cache id.
     $where_query = array(
       '#glue' => 'OR',
@@ -174,7 +172,14 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
     );
     foreach ($mapped as $key_id => $key_value) {
       if (!empty($key_value)) {
-        $select->condition($key_id, $key_value);
+        // Use a simpler syntax for single value wheres:
+        if (count($key_value) == 1) {
+          $where = "{$key_id} = " . db_placeholders($key_value, 'varchar');
+        }
+        else {
+          $where = "{$key_id} IN (" . db_placeholders($key_value, 'varchar') . ")";
+        }
+
         // Work out where the clause should be put in the query array:
         if ('AND' == views_content_cache_and_or_key_get($key_id)) {
           // AND queries go to a sub array of the clause:
@@ -196,8 +201,7 @@ function views_content_cache_update_get($cid, $reset = FALSE) {
 
     // If there were arguments in the query, run it.
     if (!empty($built_clause['#args'])) {
-      $select->execute();
-      $cache[$hash] = $select->fetchField();
+      $cache[$hash] = db_result(db_query("SELECT timestamp FROM {views_content_cache} WHERE {$built_clause['#clause']} ORDER BY timestamp DESC", $built_clause['#args']));
     }
     else {
       $cache[$hash] = FALSE;
@@ -274,7 +278,7 @@ function views_content_cache_id_record($cid) {
     if ($key_id === 'timestamp') {
       $record[$key_id] = $key_value;
     }
-    else if (isset($map[$key_id]) && $column = $map[$key_id]) {
+    elseif (isset($map[$key_id]) && $column = $map[$key_id]) {
       $record[$column] = $key_value;
     }
   }
@@ -317,7 +321,7 @@ function views_content_cache_id_schema($reset = FALSE) {
       // If the newly generated map and the prior map do not match invalidate
       // all cache update records.
       if (empty($cache->data) || ($map != $cache->data)) {
-        db_truncate('views_content_cache');
+        db_truncate('views_content_cache')->execute();
 
         // This is probably too aggressive. @TODO: See if we can surgically
         // invalidate only views that use VCC.
