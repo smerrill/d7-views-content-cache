@@ -13,27 +13,27 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
   /**
    * Test that when a node is added the appropriate cache segment is updated.
    */
-  function testStoryContentAdded() {
-    $cid = array('node' => array('story'));
+  function testarticleContentAdded() {
+    $cid = array('node' => array('article'));
     //$this->verbose(views_content_cache_update_get($cid));
-    $this->assertFalse(views_content_cache_update_get($cid, TRUE), t('Ensure that the no timestamp has been set against the story cache segment.'));
+    $this->assertFalse(views_content_cache_update_get($cid, TRUE), t('Ensure that the no timestamp has been set against the article cache segment.'));
 
     $timestamp_before = REQUEST_TIME;
-    $this->node = $this->drupalCreateNode(array('type' => 'story'));
+    $this->node = $this->drupalCreateNode(array('type' => 'article'));
     $timestamp_after = REQUEST_TIME;
 
     // Now need to make sure that views content cache recorded the correct time:
-    $cid = array('node' => array('story'));
+    $cid = array('node' => array('article'));
     $updated = views_content_cache_update_get($cid, TRUE);
     $result = ($updated <= $timestamp_after) && ($updated >= $timestamp_before);
-    $this->assertTrue($result, t('Ensure that the timestamp against the story cache segment is updated.'));
+    $this->assertTrue($result, t('Ensure that the timestamp against the article cache segment is updated.'));
 
     // Make sure the page segment was untouched:
     $this->assertFalse(views_content_cache_update_get(array('node' => array('page')), TRUE), t('Ensure that the no timestamp has been set against the page cache segment.'));
   }
 
   /**
-   * Test that when a comment is added to a story the timestamp is recorded.
+   * Test that when a comment is added to a article the timestamp is recorded.
    *
    * We'll create a node and then post a comment on it, making sure that:
    * - The comment segment has no timestamp associated with it before we begin.
@@ -46,7 +46,7 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
     $this->assertFalse(views_content_cache_update_get($cid, TRUE), t('Ensure that the no timestamp has been set against the global comment cache segment.'));
 
     // Create the node we'll be posting against.
-    $this->node = $this->drupalCreateNode(array('type' => 'story'));
+    $this->node = $this->drupalCreateNode(array('type' => 'article'));
 
     $timestamp_before = REQUEST_TIME;
     $this->comment = $this->postComment($this->node, $this->randomName(32));
@@ -59,16 +59,16 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
     $result = ($updated <= $timestamp_after) && ($updated >= $timestamp_before);
     $this->assertTrue($result, t('Ensure that the timestamp against the global comment cache segment is updated.'));
 
-    // In the story node comment segment.
-    $cid = array('node' => array('story'), 'comment' => array('changed'));
+    // In the article node comment segment.
+    $cid = array('node' => array('article'), 'comment' => array('changed'));
     $updated = views_content_cache_update_get($cid, TRUE);
     $result = ($updated <= $timestamp_after) && ($updated >= $timestamp_before);
-    $this->assertTrue($result, t('Ensure that the timestamp against the story node comment cache segment is updated.'));
+    $this->assertTrue($result, t('Ensure that the timestamp against the article node comment cache segment is updated.'));
 
-    // In the story only node comment segment.
-    $cid = array('node' => array('story'), 'node_only' => array('node_changed'));
+    // In the article only node comment segment.
+    $cid = array('node' => array('article'), 'node_only' => array('node_changed'));
     $updated = views_content_cache_update_get($cid, TRUE);
-    $this->assertFalse($updated, t('Ensure that the timestamp against the story only node comment cache segment is not updated.'));
+    $this->assertFalse($updated, t('Ensure that the timestamp against the article only node comment cache segment is not updated.'));
 
     // In the page node comment segment.
     $cid = array('node' => array('page'), 'comment' => array('changed'));
@@ -81,8 +81,8 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
     parent::setUp('views_content_cache', 'ctools', 'views', 'comment');  // Enable any modules required for the test
     // Create and log in our privileged user.
     $this->privileged_user = $this->drupalCreateUser(array(
-      'create story content',
-      'edit own story content',
+      'create article content',
+      'edit own article content',
       ));
     $this->drupalLogin($this->privileged_user);
   }
