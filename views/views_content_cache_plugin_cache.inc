@@ -113,15 +113,59 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
   }
 
 
+  /**
+   * An exact duplicate of DatabaseConnection::expandArguments().
+   *
+   * This is not a great solution but about the only one available to us if we
+   * still want VCC to work the way it always has in Drupal 7.
+   */
+  function expand_arguments(&$query, &$args) {
+    // If the placeholder value to insert is an array, assume that we need
+    // to expand it out into a comma-delimited set of placeholders.
+    foreach (array_filter($args, 'is_array') as $key => $data) {
+      $new_keys = array();
+      foreach ($data as $i => $value) {
+        // This assumes that there are no other placeholders that use the same
+        // name.  For example, if the array placeholder is defined as :example
+        // and there is already an :example_2 placeholder, this will generate
+        // a duplicate key.  We do not account for that as the calling code
+        // is already broken if that happens.
+        $new_keys[$key . '_' . $i] = $value;
+      }
+
+      // Update the query with the new placeholders.
+      // preg_replace is necessary to ensure the replacement does not affect
+      // placeholders that start with the same exact text. For example, if the
+      // query contains the placeholders :foo and :foobar, and :foo has an
+      // array of values, using str_replace would affect both placeholders,
+      // but using the following preg_replace would only affect :foo because
+      // it is followed by a non-word character.
+      $query = preg_replace('#' . $key . '\b#', implode(', ', array_keys($new_keys)), $query);
+
+      // Update the args array with the new placeholders.
+      unset($args[$key]);
+      $args += $new_keys;
+
+      $modified = TRUE;
+    }
+  }
+
   function get_results_key() {
     global $user;
 
     if (!isset($this->_results_key)) {
-      // @TODO: Add regenerating execute_info back in from
-      // $this->view->build_info, tag w/ node_access?
+      $execute_info = array();
+      foreach (array('query', 'count_query') as $v) {
+        $query = clone($this->view->build_info[$v]);
+        $args = $query->getArguments();
+
+        // For testing.
+        $this->expand_arguments($query, $args);
+        $execute_info[$v] = strtr((string)$query, $args);
+      }
 
       $key_data = array(
-        'execute_info' => $this->view->build_info,
+        'execute_info' => $execute_info,
         'roles' => array_keys($user->roles),
         'super-user' => $user->uid == 1, // special caching for super user.
         'language' => $GLOBALS['language'],
