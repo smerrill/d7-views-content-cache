@@ -16,7 +16,7 @@ class views_content_cache_key_node extends views_content_cache_key {
     if ($object_type === 'node') {
       return $object->type;
     }
-    elseif ($object_type === 'comment' && !empty($object['nid']) && ($node = node_load($object['nid']))) {
+    elseif ($object_type === 'comment' && !empty($object->nid) && ($node = node_load($object->nid))) {
       return $node->type;
     }
   }

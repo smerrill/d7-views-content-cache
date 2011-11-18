@@ -28,7 +28,7 @@ class views_content_cache_key_og extends views_content_cache_key {
         $keys[] = $gid;
       }
     }
-    elseif ($object_type === 'comment' && !empty($object['nid']) && ($node = node_load($object['nid'])) && !empty($node->og_groups)) {
+    elseif ($object_type === 'comment' && !empty($object->nid) && ($node = node_load($object->nid)) && !empty($node->og_groups)) {
       foreach ($node->og_groups as $gid) {
         $keys[] = $gid;
       }

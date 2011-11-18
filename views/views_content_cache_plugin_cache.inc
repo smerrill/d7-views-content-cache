@@ -159,7 +159,6 @@ class views_content_cache_plugin_cache extends views_plugin_cache {
         $query = clone($this->view->build_info[$v]);
         $args = $query->getArguments();
 
-        // For testing.
         $this->expand_arguments($query, $args);
         $execute_info[$v] = strtr((string)$query, $args);
       }

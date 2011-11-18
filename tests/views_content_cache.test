@@ -13,7 +13,7 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
   /**
    * Test that when a node is added the appropriate cache segment is updated.
    */
-  function testarticleContentAdded() {
+  function testArticleContentAdded() {
     $cid = array('node' => array('article'));
     //$this->verbose(views_content_cache_update_get($cid));
     $this->assertFalse(views_content_cache_update_get($cid, TRUE), t('Ensure that the no timestamp has been set against the article cache segment.'));
@@ -87,7 +87,7 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
     $this->drupalLogin($this->privileged_user);
   }
 
-    /**
+   /**
    * Post comment.
    *
    * @param $node
@@ -102,9 +102,9 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
    */
   function postComment($node, $comment, $subject = '', $contact = NULL) {
     $edit = array();
-    $edit['comment'] = $comment;
+    $edit['comment_body[und][0][value]'] = $comment;
 
-    $preview_mode = variable_get('comment_preview_' . $node->type, COMMENT_PREVIEW_REQUIRED);
+    $preview_mode = variable_get('comment_preview_' . $node->type, DRUPAL_OPTIONAL);
     $subject_mode = variable_get('comment_subject_field_' . $node->type, 1);
 
     // Must get the page before we test for fields.
@@ -120,19 +120,19 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
       $edit += $contact;
     }
     switch ($preview_mode) {
-      case COMMENT_PREVIEW_REQUIRED:
+      case DRUPAL_REQUIRED:
         // Preview required so no save button should be found.
         $this->assertNoFieldByName('op', t('Save'), t('Save button not found.'));
         $this->drupalPost(NULL, $edit, t('Preview'));
         // Don't break here so that we can test post-preview field presence and
         // function below.
-      case COMMENT_PREVIEW_OPTIONAL:
+      case DRUPAL_OPTIONAL:
         $this->assertFieldByName('op', t('Preview'), t('Preview button found.'));
         $this->assertFieldByName('op', t('Save'), t('Save button found.'));
         $this->drupalPost(NULL, $edit, t('Save'));
         break;
-
     }
+
     $match = array();
     // Get comment ID
     preg_match('/#comment-([0-9]+)/', $this->getURL(), $match);
@@ -150,8 +150,6 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
       return (object) array('id' => $match[1], 'subject' => $subject, 'comment' => $comment);
     }
   }
-
-
 
 }
 
