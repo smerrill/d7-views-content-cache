@@ -15,7 +15,6 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
    */
   function testArticleContentAdded() {
     $cid = array('node' => array('article'));
-    //$this->verbose(views_content_cache_update_get($cid));
     $this->assertFalse(views_content_cache_update_get($cid, TRUE), t('Ensure that the no timestamp has been set against the article cache segment.'));
 
     $timestamp_before = REQUEST_TIME;
@@ -56,6 +55,7 @@ class ViewsContentCacheTest extends DrupalWebTestCase {
     // In the global comment segment.
     $cid = array('comment' => array('changed'));
     $updated = views_content_cache_update_get($cid, TRUE);
+    debug($updated);
     $result = ($updated <= $timestamp_after) && ($updated >= $timestamp_before);
     $this->assertTrue($result, t('Ensure that the timestamp against the global comment cache segment is updated.'));
 
@@ -165,7 +165,8 @@ class ViewsContentCacheUnitTest extends DrupalUnitTestCase {
   }
 
   public function setUp() {
-    parent::setUp('views_content_cache', 'ctools', 'views', 'comment');  // Enable any modules required for the test
+    parent::setUp();
+    module_load_include("module", "views_content_cache");
   }
 
   function testQueryBuilder() {
